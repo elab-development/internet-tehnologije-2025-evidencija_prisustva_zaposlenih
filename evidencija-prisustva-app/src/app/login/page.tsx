@@ -4,7 +4,7 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-8">
         {/* Logo i tekst */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-8">
             <img src="/logo-tamni.png" alt="FON logo" className="h-10 w-auto" />
             <span className="text-sm text-[color:var(--color-secondary-75)]">Fakultetski servis FON-a</span>
         </div>
@@ -13,7 +13,7 @@ export default function LoginPage() {
           Evidencija prisustva
         </h1>
 
-        <form className="space-y-4">
+        <form className="space-y-6 pb-4 pt-4">
           {/* Email */}
           <div>
             <label className="block text-sm font-sans text-text mb-1">
