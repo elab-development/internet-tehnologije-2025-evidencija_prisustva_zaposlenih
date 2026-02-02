@@ -41,9 +41,6 @@ export default function DashboardPage() {
 
       {/* Glavni sadržaj */}
       <main className="flex-1 p-6">
-        <h1 className="text-xl font-semibold text-secondary-800 mb-4">
-          Evidencija nastave
-        </h1>
 
         {/* Kalendar */}
         <Calendar
