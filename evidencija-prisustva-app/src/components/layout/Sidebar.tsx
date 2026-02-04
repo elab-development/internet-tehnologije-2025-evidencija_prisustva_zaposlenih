@@ -15,19 +15,19 @@ export default function Sidebar() {
         <img src="/logo-svetli.png" alt="FON" className="h-8" />
     </div>
 
-    <div className="px-6 text-xl mb-8">
+    <div className="px-6 text-2xl mb-8">
         Dobrodošli,<span className="font-sans"> Korisnik!</span>
     </div>
 
     {/* <hr className="my-4 w-2/3 border-[color:var(--color-secondary-75)]" /> */}
 
     {/* Predmeti + Navigacija */}
-    <div className="px-4 flex flex-col text-sm">
+    <div className="px-4 flex flex-col text-md">
         <nav className="flex flex-col gap-1">
 
             {/* Izbor predmeta */}
             <div className="rounded-md transition hover:bg-secondary-100">
-                <select className="w-full px-3 py-2 text-left text-sm rounded-md bg-transparent appearance-none text-white focus:outline-none cursor-pointer">
+                <select className="w-full px-3 py-2 text-left text-md rounded-md bg-transparent appearance-none text-white focus:outline-none cursor-pointer">
                     <option className="text-black">Internet tehnologije</option>
                     <option className="text-black">Baze podataka</option>
                 </select>
@@ -50,7 +50,7 @@ export default function Sidebar() {
 
     {/* Nalog */}
     <div className="shadow-[0_-4px_4px_rgba(0,0,0,0.2)] px-4 py-4 border-t w-full border-[color:var(--color-secondary-75)]">
-        <button className="w-full text-left text-sm text-secondary-700 hover:text-secondary-900">
+        <button className="w-full text-left text-md text-secondary-700 hover:text-secondary-900">
           Profil
         </button>
     </div>
