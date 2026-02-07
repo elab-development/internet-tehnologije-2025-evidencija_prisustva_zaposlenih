@@ -7,6 +7,7 @@ import { enUS } from "date-fns/locale/en-US";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { useState } from "react";
 import EvidentiranjeForm from "./EvidentiranjeForm";
+import { TeachingEvent } from "@/features/attendance/Event";
 
 
 // Lokalizacija datuma
@@ -47,27 +48,33 @@ export default function DashboardPage() {
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [eventsList, setEventsList] = useState(events);
+  const [eventsList, setEventsList] = useState<TeachingEvent[]>([]);
   const aktivanPredmet = "Internet tehnologije"; // zameniti nekad posle tako da uzme iz sidebara
 
-  const handleAddEvent = (data: { predmet: string; tip: string; sat: number; minut: number; sala: string; komentar: string }) => {
-  if (!selectedDate) return;
+  const handleAddEvent = (data: {predmet: string; tip: string; sat: number; minut: number; sala: string;komentar: string;}) => {
+    if (!selectedDate) return;
 
-  const start = new Date(selectedDate);
-  start.setHours(data.sat, data.minut);
+    const datum = selectedDate.toISOString().split("T")[0];
 
-  const end = new Date(start);
-  end.setHours(end.getHours() + 1); // promeniti po potrebi, 1h trajanje
+    const pocetak = `${String(data.sat).padStart(2, "0")}:${String(data.minut).padStart(2, "0")}`;
 
-  const noviEvent = {
-    title: `${data.predmet} - ${data.tip}`,
-    start,
-    end,
+    const krajSat = data.sat + 1;
+    const kraj = `${String(krajSat).padStart(2, "0")}:${String(data.minut).padStart(2, "0")}`;
+
+    const noviEvent: TeachingEvent = {
+      id: crypto.randomUUID(),
+      predmet: data.predmet,
+      tip: data.tip as "Predavanje" | "Vežbe",
+      datum,
+      pocetak,
+      kraj,
+      sala: data.sala,
+      komentar: data.komentar,
+    };
+
+    setEventsList((prev) => [...prev, noviEvent]);
+    setShowForm(false);
   };
-
-  setEventsList([...eventsList, noviEvent]);
-  setShowForm(false); // zatvori modal
-};
 
   const dayPropGetter = (date: Date) => {
     if (
@@ -84,6 +91,17 @@ export default function DashboardPage() {
   
     return {};
   };   
+
+  const calendarEvents = eventsList.map((e) => {
+    const start = new Date(`${e.datum}T${e.pocetak}`);
+    const end = new Date(`${e.datum}T${e.kraj}`);
+
+    return {
+      title: `${e.predmet} – ${e.tip}`,
+      start,
+      end,
+    };
+  });
 
   return (
     <div className="flex min-h-screen bg-secondary-50 font-sans">
@@ -106,7 +124,7 @@ export default function DashboardPage() {
           views={['month', 'week', 'day', 'agenda']}
           startAccessor="start"
           endAccessor="end"
-          events={eventsList}
+          events={calendarEvents}
           style={{ height: 600 }}
           onSelectSlot={(slot: { start: Date; end: Date; slots?: Date[]; action?: string }) => setSelectedDate(slot.start)}
           dayPropGetter={dayPropGetter}

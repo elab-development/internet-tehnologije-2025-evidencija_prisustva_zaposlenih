@@ -2,7 +2,7 @@
 
 import Sidebar from "@/components/layout/Sidebar";
 import { useState } from "react";
-import { TeachingEvent } from "@/types/Event";
+import { TeachingEvent } from "@/features/attendance/Event";
 
 type HistoryEvent = {
     id: number;
