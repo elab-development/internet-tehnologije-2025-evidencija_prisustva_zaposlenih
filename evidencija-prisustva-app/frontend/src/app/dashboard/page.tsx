@@ -1,6 +1,6 @@
 "use client";
 
-import Sidebar from "../../components/layout/Sidebar";
+import Sidebar from "@/components/layout/Sidebar";
 import { Calendar, dateFnsLocalizer} from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
@@ -8,7 +8,9 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import { useState } from "react";
 import EvidentiranjeForm from "./EvidentiranjeForm";
 import { TeachingEvent } from "../../features/attendance/Event";
-
+import { useEffect } from "react";
+import { apiFetch } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 // Lokalizacija datuma
 const locales = {
@@ -50,6 +52,20 @@ export default function DashboardPage() {
   const [showForm, setShowForm] = useState(false);
   const [eventsList, setEventsList] = useState<TeachingEvent[]>([]);
   const aktivanPredmet = "Internet tehnologije"; // zameniti nekad posle tako da uzme iz sidebara
+  const router = useRouter();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const me = await apiFetch<{ user: { id: string; role: "ADMIN" | "EMPLOYEE" } }>("/me");
+        console.log("ME:", me.user);
+      } catch {
+        document.cookie = "token=; Path=/; Max-Age=0";
+        router.replace("/login");
+      }
+    })();
+  }, [router]);
+
 
   const handleAddEvent = (data: {predmet: string; tip: string; sat: number; minut: number; sala: string;komentar: string;}) => {
     if (!selectedDate) return;

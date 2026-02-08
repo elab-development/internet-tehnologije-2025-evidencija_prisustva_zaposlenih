@@ -1,25 +1,87 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { apiFetch } from "@/lib/api";
+
+type LoginResponse = {
+  message: string;
+  token: string;
+  user: {
+    id: string;
+    email: string;
+    role: "ADMIN" | "EMPLOYEE";
+    firstName: string;
+    lastName: string;
+  };
+};
+
 export default function LoginPage() {
+  const router = useRouter();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const data = await apiFetch<LoginResponse>("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+
+      // ✅ Čuvanje tokena za Authorization header
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      router.push("/dashboard");
+    } catch (err: any) {
+      setError(err.message ?? "Greška pri logovanju.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-
       <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-8">
         {/* Logo i tekst */}
         <div className="flex items-center justify-between mb-8">
-            <img src="/logo-tamni.png" alt="FON logo" className="h-10 w-auto" />
-            <span className="text-sm text-[color:var(--color-secondary-75)]">Fakultetski servis FON-a</span>
+          <img src="/logo-tamni.png" alt="FON logo" className="h-10 w-auto" />
+          <span className="text-sm text-[color:var(--color-secondary-75)]">
+            Fakultetski servis FON-a
+          </span>
         </div>
 
         <h1 className="text-2xl font-sans font-extrabold text-text mb-6 text-center">
           Evidencija prisustva
         </h1>
 
-        <form className="space-y-6 pb-4 pt-4">
+        {error && (
+          <p className="text-sm text-[color:var(--color-danger-600)] mb-2">
+            {error}
+          </p>
+        )}
+
+        <form onSubmit={onSubmit} className="space-y-6 pb-4 pt-4">
           {/* Email */}
           <div>
             <label className="block text-sm font-sans text-text mb-1">
               Email
             </label>
-            <input type="email" placeholder="ime.prezime.xxxx@fon.bg.ac.rs" className="w-full rounded-md border border-primary-300 px-3 py-2 bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-[color:var(--color-primary-900)] focus:ring-offset-2" />
+            <input
+              type="email"
+              placeholder="ime.prezime.xxxx@fon.bg.ac.rs"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-md border border-primary-300 px-3 py-2 bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-[color:var(--color-primary-900)] focus:ring-offset-2"
+            />
           </div>
 
           {/* Password */}
@@ -27,7 +89,13 @@ export default function LoginPage() {
             <label className="block text-sm font-sans text-text mb-1">
               Lozinka
             </label>
-            <input type="password" placeholder="••••••••" className="w-full rounded-md border border-secondary-300 px-3 py-2 bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-[color:var(--color-primary-900)] focus:ring-offset-2" />
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-md border border-secondary-300 px-3 py-2 bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-[color:var(--color-primary-900)] focus:ring-offset-2"
+            />
           </div>
 
           <div>
@@ -35,11 +103,14 @@ export default function LoginPage() {
           </div>
 
           {/* Button */}
-          <button type="submit" className="w-full bg-[color:var(--color-primary-900)] hover:bg-[var(--color-secondary-700)] font-sans text-white rounded-md py-2 rounded-md font-medium transition duration-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
-            Prijavi se
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-[color:var(--color-primary-900)] hover:bg-[var(--color-secondary-700)] font-sans text-white py-2 rounded-md font-medium transition duration-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {loading ? "Prijavljivanje..." : "Prijavi se"}
           </button>
         </form>
-
       </div>
     </div>
   );

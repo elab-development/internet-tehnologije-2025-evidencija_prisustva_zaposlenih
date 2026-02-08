@@ -14,10 +14,16 @@ export default function Sidebar() {
         : "text-secondary-200 hover:bg-secondary-100 hover:text-secondary-900"
     }`;
 
-const handleLogout = () => {
-  localStorage.removeItem("token");
-  router.replace("/login");  // umesto push
-};
+  const handleLogout = () => {
+    // obriši JWT cookie
+    document.cookie = "token=; Path=/; Max-Age=0";
+
+    // obriši user info
+    localStorage.removeItem("user");
+
+    // redirekcija na login
+    window.location.href = "/login";
+  };
 
   return (
     <aside className="w-64 h-screen bg-[color:var(--color-secondary-800)] flex flex-col text-white shadow-[5px_0px_6px_-4px_rgba(0,0,0,0.5)]">
@@ -28,7 +34,7 @@ const handleLogout = () => {
       </div>
 
       <div className="px-6 text-2xl mb-8">
-        DobrodoÅ¡li,<span className="font-sans"> Korisnik!</span>
+        Dobrodošli,<span className="font-sans"> Korisnik!</span>
       </div>
 
       {/* Predmeti + Navigacija */}
@@ -60,10 +66,7 @@ const handleLogout = () => {
 
       {/* Nalog */}
       <div className="shadow-[0_-4px_4px_rgba(0,0,0,0.2)] px-4 py-4 border-t w-full border-[color:var(--color-secondary-75)]">
-        <button
-          onClick={handleLogout}
-          className="w-full text-left text-md text-secondary-700 hover:text-secondary-900"
-        >
+        <button onClick={handleLogout} className="w-full text-left text-md text-secondary-700 hover:text-secondary-900">
           Odjavi se
         </button>
       </div>
