@@ -1,8 +1,8 @@
 "use client";
 
-import Sidebar from "@/components/layout/Sidebar";
+import Sidebar from "../../../components/layout/Sidebar";
 import { useState } from "react";
-import { TeachingEvent } from "@/features/attendance/Event";
+import { TeachingEvent } from "../../../features/attendance/Event";
 
 type HistoryEvent = {
     id: number;

@@ -1,4 +1,4 @@
-import { TeachingEvent } from "@/features/attendance/Event";
+import { TeachingEvent } from "./Event";
 import { CalendarEvent } from "./calendar";
 
 export function teachingToCalendarEvent(
