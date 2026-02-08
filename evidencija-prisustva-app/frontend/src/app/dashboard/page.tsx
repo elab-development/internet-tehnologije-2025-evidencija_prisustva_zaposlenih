@@ -1,21 +1,16 @@
 "use client";
 
 import Sidebar from "@/components/layout/Sidebar";
-import { Calendar, dateFnsLocalizer} from "react-big-calendar";
+import { Calendar, dateFnsLocalizer, type Range } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import EvidentiranjeForm from "./EvidentiranjeForm";
-import { TeachingEvent } from "../../features/attendance/Event";
-import { useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 import { useRouter } from "next/navigation";
 
-// Lokalizacija datuma
-const locales = {
-  "en-US": enUS,
-};
+const locales = { "en-US": enUS };
 
 const localizer = dateFnsLocalizer({
   format,
@@ -25,40 +20,56 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-// Primer događaja
-const events = [
-  {
-    title: "Sastanak sa timom",
-    start: new Date(2026, 0, 29, 10, 0),
-    end: new Date(2026, 0, 29, 11, 0),
-  },
-  {
-    title: "Pregled prisustva",
-    start: new Date(2026, 0, 30, 14, 0),
-    end: new Date(2026, 0, 30, 15, 0),
-  },
-];
-
-type CalendarSlot = {
-  start: Date;
-  end: Date;
-  slots: Date[];
-  action: "select" | "click" | "doubleClick";
+type ActivityDto = {
+  id: string;
+  userId: string;
+  subjectId: string;
+  type: string;
+  room: string | null;
+  title: string;
+  description: string | null;
+  startTime: string;
+  endTime: string;
 };
 
-export default function DashboardPage() {
+function rangeToFromTo(range: Range | Date[] | { start: Date; end: Date }) {
+  if (Array.isArray(range) && range.length > 0) {
+    const from = new Date(range[0]);
+    const to = new Date(range[range.length - 1]);
+    to.setHours(23, 59, 59, 999);
+    return { from, to };
+  }
 
+  if (range && "start" in range && "end" in range) {
+    const from = new Date(range.start);
+    const to = new Date(range.end);
+    to.setHours(23, 59, 59, 999);
+    return { from, to };
+  }
+
+  const from = new Date();
+  from.setDate(from.getDate() - 30);
+  const to = new Date();
+  to.setDate(to.getDate() + 30);
+  to.setHours(23, 59, 59, 999);
+  return { from, to };
+}
+
+export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [eventsList, setEventsList] = useState<TeachingEvent[]>([]);
-  const aktivanPredmet = "Internet tehnologije"; // zameniti nekad posle tako da uzme iz sidebara
+
+  const [dbActivities, setDbActivities] = useState<ActivityDto[]>([]);
+  const [mySubjects, setMySubjects] = useState<{ id: string; name: string }[]>([]);
+
   const router = useRouter();
 
   useEffect(() => {
     (async () => {
       try {
-        const me = await apiFetch<{ user: { id: string; role: "ADMIN" | "EMPLOYEE" } }>("/me");
-        console.log("ME:", me.user);
+        await apiFetch("/me");
+        const subjects = await apiFetch<{ id: string; name: string }[]>("/subjects/mine");
+        setMySubjects(subjects);
       } catch {
         document.cookie = "token=; Path=/; Max-Age=0";
         router.replace("/login");
@@ -66,94 +77,129 @@ export default function DashboardPage() {
     })();
   }, [router]);
 
+  async function loadActivities(from: Date, to: Date) {
+    try {
+      const data = await apiFetch<ActivityDto[]>(
+        `/activities?from=${encodeURIComponent(from.toISOString())}&to=${encodeURIComponent(to.toISOString())}`
+      );
+      setDbActivities(data);
+    } catch (e) {
+      console.error("Failed to load activities:", e);
+    }
+  }
 
-  const handleAddEvent = (data: {predmet: string; tip: string; sat: number; minut: number; sala: string;komentar: string;}) => {
+  useEffect(() => {
+    const from = new Date();
+    from.setDate(from.getDate() - 30);
+    const to = new Date();
+    to.setDate(to.getDate() + 30);
+    to.setHours(23, 59, 59, 999);
+    loadActivities(from, to);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleAddEvent = async (data: {
+    subjectId: string;
+    tip: string;
+    sat: number;
+    minut: number;
+    sala: string;
+    komentar: string;
+  }) => {
     if (!selectedDate) return;
 
-    const datum = selectedDate.toISOString().split("T")[0];
+    const subject = mySubjects.find((s) => s.id === data.subjectId);
+    const subjectName = subject?.name ?? "Predmet";
 
-    const pocetak = `${String(data.sat).padStart(2, "0")}:${String(data.minut).padStart(2, "0")}`;
+    const start = new Date(selectedDate);
+    start.setHours(data.sat, data.minut, 0, 0);
 
-    const krajSat = data.sat + 1;
-    const kraj = `${String(krajSat).padStart(2, "0")}:${String(data.minut).padStart(2, "0")}`;
+    const end = new Date(start);
+    end.setHours(start.getHours() + 1);
 
-    const noviEvent: TeachingEvent = {
-      id: crypto.randomUUID(),
-      predmet: data.predmet,
-      tip: data.tip as "Predavanje" | "Vežbe",
-      datum,
-      pocetak,
-      kraj,
-      sala: data.sala,
-      komentar: data.komentar,
-    };
+    try {
+      await apiFetch("/activities", {
+        method: "POST",
+        body: JSON.stringify({
+          subjectId: data.subjectId,
+          type: data.tip,
+          room: data.sala,
+          title: `${subjectName} – ${data.tip}`,
+          description: data.komentar,
+          startTime: start.toISOString(),
+          endTime: end.toISOString(),
+        }),
+      });
 
-    setEventsList((prev) => [...prev, noviEvent]);
-    setShowForm(false);
+      // refresuj (za sada oko danas)
+      const from = new Date();
+      from.setDate(from.getDate() - 30);
+      const to = new Date();
+      to.setDate(to.getDate() + 30);
+      to.setHours(23, 59, 59, 999);
+      await loadActivities(from, to);
+
+      setShowForm(false);
+    } catch (e) {
+      console.error("Greška pri upisu aktivnosti:", e);
+    }
   };
 
   const dayPropGetter = (date: Date) => {
-    if (
-      selectedDate &&
-      date.toDateString() === selectedDate.toDateString()
-    ) {
-      return {
-        style: {
-          backgroundColor: '#eef2ff',
-          color: 'white',
-        },
-      };
+    if (selectedDate && date.toDateString() === selectedDate.toDateString()) {
+      return { style: { backgroundColor: "#eef2ff", color: "white" } };
     }
-  
     return {};
-  };   
+  };
 
-  const calendarEvents = eventsList.map((e) => {
-    const start = new Date(`${e.datum}T${e.pocetak}`);
-    const end = new Date(`${e.datum}T${e.kraj}`);
-
-    return {
-      title: `${e.predmet} – ${e.tip}`,
-      start,
-      end,
-    };
-  });
+  const calendarEvents = useMemo(() => {
+    return dbActivities.map((a) => ({
+      title: a.title,
+      start: new Date(a.startTime),
+      end: new Date(a.endTime),
+    }));
+  }, [dbActivities]);
 
   return (
     <div className="flex min-h-screen bg-secondary-50 font-sans">
-      {/* Tvoj originalni sidebar */}
       <Sidebar />
 
-      {/* Glavni sadržaj */}
       <main className="flex-1 p-6">
-
         <div className="flex justify-end mb-4">
-          <button onClick={() => setShowForm(true)} className="bg-[color:var(--color-secondary-800)] hover:bg-[color:var(--color-secondary-700)] text-white px-4 py-2 rounded-md text-sm transition">     
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-[color:var(--color-secondary-800)] hover:bg-[color:var(--color-secondary-700)] text-white px-4 py-2 rounded-md text-sm transition"
+          >
             Evidentiraj nastavu +
           </button>
         </div>
 
-        {/* Kalendar */}
         <Calendar
           localizer={localizer}
           selectable
-          views={['month', 'week', 'day', 'agenda']}
+          views={["month", "week", "day", "agenda"]}
           startAccessor="start"
           endAccessor="end"
           events={calendarEvents}
           style={{ height: 600 }}
-          onSelectSlot={(slot: { start: Date; end: Date; slots?: Date[]; action?: string }) => setSelectedDate(slot.start)}
+          onSelectSlot={(slot: { start: Date }) => setSelectedDate(slot.start)}
           dayPropGetter={dayPropGetter}
+          onRangeChange={(range) => {
+            const { from, to } = rangeToFromTo(range as any);
+            loadActivities(from, to);
+          }}
         />
 
-        {/* Modal */}
         {showForm && (
           <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-xs z-50">
-            <EvidentiranjeForm onClose={() => setShowForm(false)} onSubmit={handleAddEvent}
-            predmet={aktivanPredmet} datum={selectedDate}/>
+            <EvidentiranjeForm
+              onClose={() => setShowForm(false)}
+              onSubmit={handleAddEvent}
+              subjects={mySubjects}
+              datum={selectedDate}
+            />
           </div>
         )}
-      
       </main>
     </div>
   );
