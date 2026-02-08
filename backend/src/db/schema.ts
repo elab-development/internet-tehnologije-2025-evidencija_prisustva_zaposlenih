@@ -27,18 +27,31 @@ export const users = pgTable("users", {
 export const activities = pgTable("activities", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id").references(() => users.id).notNull(),
+
+  subjectId: uuid("subject_id").references(() => subjects.id).notNull(),
+  type: varchar("type", { length: 20 }).notNull(),
+  room: varchar("room", { length: 50 }),     
+
   title: varchar("title", { length: 200 }).notNull(),
   description: text("description"),
   startTime: timestamp("start_time").notNull(),
   endTime: timestamp("end_time").notNull(),
 });
 
-export const attendanceRecords = pgTable("attendance_records", {
+export const departments = pgTable("departments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: varchar("name", { length: 120 }).notNull().unique(),
+});
+
+export const subjects = pgTable("subjects", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  code: varchar("code", { length: 20 }).notNull().unique(),   // sifra predmeta (npr ITEH)
+  name: varchar("name", { length: 200 }).notNull(),
+  departmentId: uuid("department_id").references(() => departments.id).notNull(),
+});
+
+export const userSubjects = pgTable("user_subjects", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id").references(() => users.id).notNull(),
-  date: date("date").notNull(),
-  arrivalTime: time("arrival_time"),
-  departureTime: time("departure_time"),
-  totalHours: decimal("total_hours", { precision: 6, scale: 2 }),
-  note: text("note"),
+  subjectId: uuid("subject_id").references(() => subjects.id).notNull(),
 });

@@ -1,3 +1,4 @@
+import type { Request, Response } from "express";
 import { Router } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -17,7 +18,7 @@ function mustEnv(name: string): string {
 }
 
 // ================= REGISTER =================
-router.post("/register", async (req, res) => {
+router.post("/login", async (req: Request, res: Response) => {
   try {
     const { firstName, lastName, email, password, role } = req.body;
 
