@@ -30,16 +30,20 @@ router.post("/login", async (req, res) => {
 
     const normalizedEmail = email.trim().toLowerCase();
 
-    const userQuery = await db
-      .select({
-        id: users.id,
-        email: users.email,
-        passwordHash: users.passwordHash,
-        roleId: users.roleId,
-      })
-      .from(users)
-      .where(eq(users.email, normalizedEmail))
-      .limit(1);
+     const userQuery = await db
+    .select({
+      id: users.id,
+      email: users.email,
+      passwordHash: users.passwordHash,
+      roleId: users.roleId,
+      roleName: roles.name,
+      firstName: users.firstName,
+      lastName: users.lastName,
+    })
+    .from(users)
+    .innerJoin(roles, eq(users.roleId, roles.id))
+    .where(eq(users.email, normalizedEmail))
+    .limit(1);
 
     const user = userQuery[0];
 
@@ -71,9 +75,16 @@ router.post("/login", async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    return res.json({
+     return res.json({
       message: "Uspešna prijava.",
       token,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.roleName,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      },
     });
   } catch (error) {
     console.error(error);

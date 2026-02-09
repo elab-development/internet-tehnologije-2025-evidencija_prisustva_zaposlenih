@@ -6,6 +6,7 @@ import subjectsRoutes from "./routes/subjects.js";
 import authRoutes from "./routes/auth.js";
 import meRoutes from "./routes/me.js";
 import activitiesRoutes from "./routes/activities.js";
+import adminRoutes from "./routes/admin.js";
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use("/me", meRoutes);
 app.use("/auth", authRoutes);
 app.use("/activities", activitiesRoutes);
 app.use("/subjects", subjectsRoutes);
+app.use("/admin", adminRoutes);
 
 
 app.get("/", (req, res) => {

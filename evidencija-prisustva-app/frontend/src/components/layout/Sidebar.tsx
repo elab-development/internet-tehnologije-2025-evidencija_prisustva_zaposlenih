@@ -13,6 +13,9 @@ export default function Sidebar() {
   const [subjects, setSubjects] = useState<SubjectOption[]>([]);
   const [activeSubjectId, setActiveSubjectId] = useState<string>("");
 
+ 
+  const [displayName, setDisplayName] = useState<string>("Korisnik");
+
   const itemClass = (href: string) =>
     `w-full text-left px-3 py-2 rounded-md transition ${
       pathname === href
@@ -20,13 +23,31 @@ export default function Sidebar() {
         : "text-secondary-200 hover:bg-secondary-100 hover:text-secondary-900"
     }`;
 
+  
+  useEffect(() => {
+    const raw = localStorage.getItem("user");
+    if (!raw) return;
+
+    try {
+      const u = JSON.parse(raw);
+
+      // ne važi za admina
+      if (u?.role === "ADMIN") return;
+
+      const full = [u?.firstName, u?.lastName].filter(Boolean).join(" ").trim();
+      if (full) setDisplayName(full);
+    } catch {
+      // ignore
+    }
+  }, []);
+
   useEffect(() => {
     (async () => {
       try {
         const data = await apiFetch<SubjectOption[]>("/subjects/mine");
         setSubjects(data);
 
-        // pokušaj da učitaš prethodno izabrani predmet
+       
         const saved = localStorage.getItem("activeSubjectId");
 
         const initial =
@@ -41,7 +62,7 @@ export default function Sidebar() {
           const name = data.find((s) => s.id === initial)?.name ?? "";
           localStorage.setItem("activeSubjectName", name);
 
-          // signal drugim komponentama (kalendar) da je promenjen predmet
+          
           window.dispatchEvent(new CustomEvent("activeSubjectChanged"));
         }
       } catch (e) {
@@ -61,7 +82,8 @@ export default function Sidebar() {
   };
 
   const handleLogout = () => {
-    document.cookie = "token=; Path=/; Max-Age=0";
+    
+    localStorage.removeItem("token");
     localStorage.removeItem("user");
     localStorage.removeItem("activeSubjectId");
     localStorage.removeItem("activeSubjectName");
@@ -76,7 +98,7 @@ export default function Sidebar() {
       </div>
 
       <div className="px-6 text-2xl mb-8">
-        Dobrodošli,<span className="font-sans"> Korisnik!</span>
+        Dobrodošli,<br /><span className="font-sans"> {displayName}!</span>
       </div>
 
       {/* Predmeti + Navigacija */}
@@ -110,7 +132,10 @@ export default function Sidebar() {
           </Link>
 
           {/* Istorija */}
-          <Link href="/dashboard/history" className={itemClass("/dashboard/history")}>
+          <Link
+            href="/dashboard/history"
+            className={itemClass("/dashboard/history")}
+          >
             Istorija
           </Link>
         </nav>
