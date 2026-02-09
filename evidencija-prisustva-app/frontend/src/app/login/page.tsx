@@ -36,7 +36,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      // ✅ Čuvanje tokena za Authorization header
+      
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 

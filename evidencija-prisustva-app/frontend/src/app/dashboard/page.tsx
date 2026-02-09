@@ -184,8 +184,8 @@ export default function DashboardPage() {
           style={{ height: 600 }}
           onSelectSlot={(slot: { start: Date }) => setSelectedDate(slot.start)}
           dayPropGetter={dayPropGetter}
-          onRangeChange={(range) => {
-            const { from, to } = rangeToFromTo(range as any);
+          onRangeChange={(range: Range | Date[] | { start: Date; end: Date }) => {
+            const { from, to } = rangeToFromTo(range);
             loadActivities(from, to);
           }}
         />

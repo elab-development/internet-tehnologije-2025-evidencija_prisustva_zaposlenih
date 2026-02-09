@@ -1,6 +1,6 @@
 import "dotenv/config";
 import bcrypt from "bcrypt";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "./db/index.js";
 import {
   roles,
@@ -108,7 +108,12 @@ async function ensureUserSubject(userId: string, subjectId: string) {
   const existing = await db
     .select({ id: userSubjects.id })
     .from(userSubjects)
-    .where(eq(userSubjects.userId, userId))
+    .where(
+      and(
+        eq(userSubjects.userId, userId),
+        eq(userSubjects.subjectId, subjectId)
+      )
+    )
     .limit(1);
 
   if (existing.length > 0) return;
