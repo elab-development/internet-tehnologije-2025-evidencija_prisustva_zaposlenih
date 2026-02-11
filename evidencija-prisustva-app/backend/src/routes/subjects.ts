@@ -7,7 +7,7 @@ import { subjects, userSubjects } from "../db/schema.js";
 
 const router = Router();
 
-// GET /subjects/mine  -> predmeti ulogovanog korisnika (id + name)
+// predmeti ulogovanog korisnika
 router.get("/mine", authMiddleware, async (req, res) => {
   try {
     const userId = req.user!.id;

@@ -95,7 +95,7 @@ export default function DashboardPage() {
     to.setDate(to.getDate() + 30);
     to.setHours(23, 59, 59, 999);
     loadActivities(from, to);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+ 
   }, []);
 
   const handleAddEvent = async (data: {

@@ -10,8 +10,6 @@ import {
   userSubjects,
 } from "./db/schema.js";
 
-/* ================= HELPERS ================= */
-
 async function ensureRole(name: string): Promise<string> {
   const existing = await db
     .select({ id: roles.id })

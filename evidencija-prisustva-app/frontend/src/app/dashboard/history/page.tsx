@@ -15,8 +15,8 @@ type ActivityDto = {
   room: string | null;
   title: string;
   description: string | null;
-  startTime: string; // ISO
-  endTime: string;   // ISO
+  startTime: string; 
+  endTime: string;
 };
 
 function toHHMM(d: Date) {
@@ -24,15 +24,15 @@ function toHHMM(d: Date) {
 }
 
 function toICSDate(d: Date) {
-  // YYYYMMDDTHHMMSSZ
+ 
   return d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
 }
 
 export default function HistoryPage() {
   const router = useRouter();
 
-  const [fromDate, setFromDate] = useState(""); // "YYYY-MM-DD"
-  const [toDate, setToDate] = useState("");     // "YYYY-MM-DD"
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const [subjects, setSubjects] = useState<SubjectOption[]>([]);
   const [activities, setActivities] = useState<ActivityDto[]>([]);
@@ -68,7 +68,7 @@ export default function HistoryPage() {
     }
   }
 
-  // inicijalno: prošlih 90 dana do danas (možeš promeniti)
+  // prošlih 90 dana do danas
   useEffect(() => {
     const now = new Date();
     const from = new Date();
@@ -77,12 +77,12 @@ export default function HistoryPage() {
     to.setHours(23, 59, 59, 999);
 
     loadActivities(from, to);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, []);
 
   // kad korisnik promeni filter, povuci novi opseg
   useEffect(() => {
-    // ako nema filtera, ne moramo da refetchujemo (ostaje inicijalni opseg)
+    // ako nema filtera, ne moramo da refetchujemo
     if (!fromDate && !toDate) return;
 
     const from = fromDate ? new Date(`${fromDate}T00:00:00.000Z`) : (() => {
@@ -98,10 +98,10 @@ export default function HistoryPage() {
     })();
 
     loadActivities(from, to);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  
   }, [fromDate, toDate]);
 
-  // samo održane (u prošlosti)
+  // samo održane
   const pastActivities = useMemo(() => {
     const now = new Date();
     return activities

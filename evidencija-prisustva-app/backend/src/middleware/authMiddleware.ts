@@ -22,14 +22,12 @@ function parseBearerToken(authHeader?: string): string | null {
   return token;
 }
 
-// ✅ tip za req.user
 type AppUser = {
   id: string;
   role: "ADMIN" | "EMPLOYEE";
   roleId: string;
 };
 
-// ✅ augment Express Request (da TS zna za req.user)
 declare global {
   namespace Express {
     interface Request {

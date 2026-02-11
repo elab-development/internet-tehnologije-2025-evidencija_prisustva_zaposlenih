@@ -18,7 +18,7 @@ interface EvidentiranjeFormProps {
   // umesto jednog naziva, prosleđujemo listu predmeta
   subjects: SubjectOption[];
 
-  // opcionalno: preselektovan predmet (npr. iz sidebara)
+  // preselektovan predmet
   initialSubjectId?: string;
 
   datum: Date | null;
@@ -38,7 +38,6 @@ export default function EvidentiranjeForm({
   const [sala, setSala] = useState("");
   const [komentar, setKomentar] = useState("");
 
-  // Ako se subjects učitaju “naknadno”, postavi default
   useEffect(() => {
     if (!subjectId && subjects[0]?.id) {
       setSubjectId(subjects[0].id);

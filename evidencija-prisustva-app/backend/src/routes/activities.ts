@@ -8,7 +8,7 @@ import { activities } from "../db/schema.js";
 const router = Router();
 
 /**
- * GET /activities?from=ISO&to=ISO
+ * GET /activities
  * Vraća aktivnosti u zadatom opsegu za ulogovanog korisnika.
  */
 router.get("/", authMiddleware, async (req, res) => {

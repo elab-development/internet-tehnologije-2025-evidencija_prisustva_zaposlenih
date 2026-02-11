@@ -45,7 +45,7 @@ export const departments = pgTable("departments", {
 
 export const subjects = pgTable("subjects", {
   id: uuid("id").defaultRandom().primaryKey(),
-  code: varchar("code", { length: 20 }).notNull().unique(),   // sifra predmeta (npr ITEH)
+  code: varchar("code", { length: 20 }).notNull().unique(),   // sifra predmeta
   name: varchar("name", { length: 200 }).notNull(),
   departmentId: uuid("department_id").references(() => departments.id).notNull(),
 });

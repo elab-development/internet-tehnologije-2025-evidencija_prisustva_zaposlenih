@@ -31,7 +31,7 @@ function pad4(n: number) {
 }
 
 function toIcsDate(d: Date) {
-  // UTC: YYYYMMDDTHHMMSSZ
+  
   const yyyy = d.getUTCFullYear();
   const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
   const dd = String(d.getUTCDate()).padStart(2, "0");
@@ -44,13 +44,11 @@ function toIcsDate(d: Date) {
 // sve admin rute su auth + admin
 router.use(authMiddleware, requireAdmin);
 
-/** GET /admin/subjects */
 router.get("/subjects", async (_req, res) => {
   const rows = await db.select({ id: subjects.id, name: subjects.name }).from(subjects);
   res.json(rows);
 });
 
-/** GET /admin/users (sa predmetima) */
 router.get("/users", async (_req, res) => {
   const rows = await db
     .select({
@@ -88,7 +86,6 @@ router.get("/users", async (_req, res) => {
   res.json(Array.from(map.values()));
 });
 
-/** GET /admin/next-professor-code -> npr 0003 */
 router.get("/next-professor-code", async (_req, res) => {
   const rows = await db.select({ email: users.email }).from(users);
 
@@ -103,7 +100,6 @@ router.get("/next-professor-code", async (_req, res) => {
   res.json({ nextCode: pad4(max + 1) });
 });
 
-/** POST /admin/users */
 router.post("/users", async (req, res) => {
   const { firstName, lastName, professorCode, password, subjectIds } = req.body ?? {};
 
@@ -152,7 +148,6 @@ router.post("/users", async (req, res) => {
   res.status(201).json({ id: newUserId, email });
 });
 
-/** PUT /admin/users/:id */
 router.put("/users/:id", async (req, res) => {
   const userId = req.params.id;
   const { firstName, lastName, professorCode, password, subjectIds } = req.body ?? {};
@@ -198,7 +193,6 @@ router.put("/users/:id", async (req, res) => {
   res.json({ message: "Sačuvano." });
 });
 
-/** DELETE /admin/users/:id */
 router.delete("/users/:id", async (req, res) => {
   const userId = req.params.id;
 
@@ -222,7 +216,6 @@ router.delete("/users/:id", async (req, res) => {
   res.json({ message: "Obrisano." });
 });
 
-/** GET /admin/users/:id/ics */
 router.get("/users/:id/ics", async (req, res) => {
   const userId = req.params.id;
 

@@ -3,7 +3,6 @@ const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.NEXT_PUBLIC_
 export async function apiFetch<T>(path: string, init: RequestInit = {}) {
   const headers = new Headers(init.headers);
 
-  // default content-type (ako šalješ body)
   if (!headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
