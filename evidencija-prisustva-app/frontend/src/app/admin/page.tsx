@@ -25,10 +25,6 @@ function normalizeEmailPart(s: string) {
     .replace(/\s+/g, "");
 }
 
-function pad4(n: number) {
-  return String(n).padStart(4, "0");
-}
-
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -66,8 +62,12 @@ export default function AdminUsersPage() {
       ]);
       setUsers(u);
       setSubjects(s);
-    } catch (e: any) {
-      setError(e.message ?? "Greška pri učitavanju.");
+    } catch (e: unknown) {
+      const msg =
+        typeof e === "object" && e && "message" in e
+          ? String((e as { message?: string }).message)
+          : "Greška";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -118,7 +118,6 @@ export default function AdminUsersPage() {
     setFirstName(u.firstName);
     setLastName(u.lastName);
 
-    // probaj izvući 4 cifre iz email-a
     const m = u.email.match(/\.([0-9]{4})@/);
     setProfCode(m?.[1] ?? "");
 
@@ -146,7 +145,7 @@ export default function AdminUsersPage() {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       professorCode: profCode,
-      password: password || undefined, // kod edit-a može prazno (ne menja lozinku)
+      password: password || undefined,
       subjectIds: selectedSubjectIds,
     };
 
@@ -159,8 +158,12 @@ export default function AdminUsersPage() {
       setOpen(false);
       resetForm();
       await loadAll();
-    } catch (e: any) {
-      setError(e.message ?? "Greška pri čuvanju.");
+    } catch (e: unknown) {
+      const msg =
+        typeof e === "object" && e && "message" in e
+          ? String((e as { message?: string }).message)
+          : "Greška";
+      setError(msg);
     }
   }
 
@@ -169,14 +172,19 @@ export default function AdminUsersPage() {
     try {
       await apiFetch(`/admin/users/${id}`, { method: "DELETE" });
       await loadAll();
-    } catch (e: any) {
-      alert(e.message ?? "Greška pri brisanju.");
+    } catch (e: unknown) {
+      const msg =
+        typeof e === "object" && e && "message" in e
+          ? String((e as { message?: string }).message)
+          : "Greška";
+      setError(msg);
     }
   }
 
   async function downloadIcs(userId: string) {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000"}/admin/users/${userId}/ics`, {
+      const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
+      const res = await fetch(`${base}/admin/users/${userId}/ics`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token") ?? ""}`,
         },
@@ -191,8 +199,12 @@ export default function AdminUsersPage() {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-    } catch (e: any) {
-      alert(e.message ?? "Greška pri preuzimanju.");
+    } catch (e: unknown) {
+      const msg =
+        typeof e === "object" && e && "message" in e
+          ? String((e as { message?: string }).message)
+          : "Greška";
+      setError(msg);
     }
   }
 
@@ -295,7 +307,6 @@ export default function AdminUsersPage() {
           </div>
         )}
 
-        {/* MODAL */}
         {open && (
           <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-xs z-50">
             <div className="w-full max-w-xl bg-white rounded-xl shadow-xl p-6">
@@ -303,19 +314,12 @@ export default function AdminUsersPage() {
                 <h2 className="text-xl font-sans font-extrabold text-text">
                   {mode === "create" ? "Dodaj korisnika" : "Izmeni korisnika"}
                 </h2>
-                <button
-                  onClick={() => setOpen(false)}
-                  className="text-secondary-700 hover:text-secondary-900"
-                >
+                <button onClick={() => setOpen(false)} className="text-secondary-700 hover:text-secondary-900">
                   ✕
                 </button>
               </div>
 
-              {error && (
-                <p className="text-sm text-[color:var(--color-danger-600)] mb-2">
-                  {error}
-                </p>
-              )}
+              {error && <p className="text-sm text-[color:var(--color-danger-600)] mb-2">{error}</p>}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 
@@ -25,7 +25,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -36,7 +36,6 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
@@ -45,8 +44,12 @@ export default function LoginPage() {
       } else {
         router.push("/dashboard");
       }
-    } catch (err: any) {
-      setError(err.message ?? "Greška pri logovanju.");
+    } catch (e: unknown) {
+      const msg =
+        typeof e === "object" && e && "message" in e
+          ? String((e as { message?: string }).message)
+          : "Neuspešan login";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -55,30 +58,18 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-8">
-        {/* Logo i tekst */}
         <div className="flex items-center justify-between mb-8">
           <img src="/logo-tamni.png" alt="FON logo" className="h-10 w-auto" />
-          <span className="text-sm text-[color:var(--color-secondary-75)]">
-            Fakultetski servis FON-a
-          </span>
+          <span className="text-sm text-[color:var(--color-secondary-75)]">Fakultetski servis FON-a</span>
         </div>
 
-        <h1 className="text-2xl font-sans font-extrabold text-text mb-6 text-center">
-          Evidencija prisustva
-        </h1>
+        <h1 className="text-2xl font-sans font-extrabold text-text mb-6 text-center">Evidencija prisustva</h1>
 
-        {error && (
-          <p className="text-sm text-[color:var(--color-danger-600)] mb-2">
-            {error}
-          </p>
-        )}
+        {error && <p className="text-sm text-[color:var(--color-danger-600)] mb-2">{error}</p>}
 
         <form onSubmit={onSubmit} className="space-y-6 pb-4 pt-4">
-          {/* Email */}
           <div>
-            <label className="block text-sm font-sans text-text mb-1">
-              Email
-            </label>
+            <label className="block text-sm font-sans text-text mb-1">Email</label>
             <input
               type="email"
               placeholder="ime.prezime.xxxx@fon.bg.ac.rs"
@@ -88,11 +79,8 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Password */}
           <div>
-            <label className="block text-sm font-sans text-text mb-1">
-              Lozinka
-            </label>
+            <label className="block text-sm font-sans text-text mb-1">Lozinka</label>
             <input
               type="password"
               placeholder="••••••••"
@@ -106,7 +94,6 @@ export default function LoginPage() {
             <hr className="w-full h-[1.5px] bg-[color:var(--color-secondary-600)] border-0 my-6 rounded-md" />
           </div>
 
-          {/* Button */}
           <button
             type="submit"
             disabled={loading}

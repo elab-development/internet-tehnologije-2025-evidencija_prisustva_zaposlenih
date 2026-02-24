@@ -7,6 +7,8 @@ import authRoutes from "./routes/auth.js";
 import meRoutes from "./routes/me.js";
 import activitiesRoutes from "./routes/activities.js";
 import adminRoutes from "./routes/admin.js";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./swagger.js";
 
 dotenv.config();
 
@@ -20,6 +22,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use("/me", meRoutes);
 app.use("/auth", authRoutes);
