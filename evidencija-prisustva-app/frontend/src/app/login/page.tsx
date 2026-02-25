@@ -4,6 +4,8 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 
+type EmployeeType = "PROFESSOR" | "ASSISTANT";
+
 type LoginResponse = {
   message: string;
   token: string;
@@ -13,6 +15,8 @@ type LoginResponse = {
     role: "ADMIN" | "EMPLOYEE";
     firstName: string;
     lastName: string;
+
+    employeeType?: EmployeeType;
   };
 };
 
@@ -36,9 +40,14 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
+      // SAVE AUTH DATA
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
+      localStorage.setItem("role", data.user?.role ?? "");
+      localStorage.setItem("employeeType", data.user?.employeeType ?? "");
+
+      // REDIRECT
       if (data.user?.role === "ADMIN") {
         router.push("/admin");
       } else {
@@ -60,16 +69,26 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-white rounded-xl shadow-xl p-8">
         <div className="flex items-center justify-between mb-8">
           <img src="/logo-tamni.png" alt="FON logo" className="h-10 w-auto" />
-          <span className="text-sm text-[color:var(--color-secondary-75)]">Fakultetski servis FON-a</span>
+          <span className="text-sm text-[color:var(--color-secondary-75)]">
+            Fakultetski servis FON-a
+          </span>
         </div>
 
-        <h1 className="text-2xl font-sans font-extrabold text-text mb-6 text-center">Evidencija prisustva</h1>
+        <h1 className="text-2xl font-sans font-extrabold text-text mb-6 text-center">
+          Evidencija prisustva
+        </h1>
 
-        {error && <p className="text-sm text-[color:var(--color-danger-600)] mb-2">{error}</p>}
+        {error && (
+          <p className="text-sm text-[color:var(--color-danger-600)] mb-2">
+            {error}
+          </p>
+        )}
 
         <form onSubmit={onSubmit} className="space-y-6 pb-4 pt-4">
           <div>
-            <label className="block text-sm font-sans text-text mb-1">Email</label>
+            <label className="block text-sm font-sans text-text mb-1">
+              Email
+            </label>
             <input
               type="email"
               placeholder="ime.prezime.xxxx@fon.bg.ac.rs"
@@ -80,7 +99,9 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-sans text-text mb-1">Lozinka</label>
+            <label className="block text-sm font-sans text-text mb-1">
+              Lozinka
+            </label>
             <input
               type="password"
               placeholder="••••••••"

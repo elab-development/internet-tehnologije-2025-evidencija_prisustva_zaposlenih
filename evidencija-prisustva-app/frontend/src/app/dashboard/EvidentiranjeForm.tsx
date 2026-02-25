@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type SubjectOption = { id: string; name: string };
 
@@ -32,7 +32,14 @@ export default function EvidentiranjeForm({
   datum,
 }: EvidentiranjeFormProps) {
   const [subjectId, setSubjectId] = useState<string>(initialSubjectId ?? subjects[0]?.id ?? "");
-  const [tip, setTip] = useState("Vežbe");
+
+  const isAssistant = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return (localStorage.getItem("employeeType") ?? "").toUpperCase() === "ASSISTANT";
+  }, []);
+
+  const [tip, setTip] = useState(isAssistant ? "Vežbe" : "Vežbe");
+
   const [sat, setSat] = useState(8);
   const [minut, setMinut] = useState(15);
   const [sala, setSala] = useState("");
@@ -44,11 +51,19 @@ export default function EvidentiranjeForm({
     }
   }, [subjects, subjectId]);
 
+  useEffect(() => {
+    if (isAssistant && tip === "Predavanje") {
+      setTip("Vežbe");
+    }
+  }, [isAssistant, tip]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!subjectId) return;
 
-    onSubmit({ subjectId, tip, sat, minut, sala, komentar });
+    const safeTip = isAssistant ? "Vežbe" : tip;
+
+    onSubmit({ subjectId, tip: safeTip, sat, minut, sala, komentar });
   };
 
   const hasSubjects = subjects.length > 0;
@@ -95,9 +110,15 @@ export default function EvidentiranjeForm({
             onChange={(e) => setTip(e.target.value)}
             className="w-full rounded-md border border-[color:var(--color-secondary-700)] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[color:var(--color-primary-900)]"
           >
-            <option>Predavanje</option>
+            {!isAssistant ? <option>Predavanje</option> : null}
             <option>Vežbe</option>
           </select>
+
+          {isAssistant ? (
+            <p className="text-xs text-secondary-600 mt-1">
+              Kao asistent možete evidentirati samo vežbe.
+            </p>
+          ) : null}
         </div>
 
         {/* Vreme */}

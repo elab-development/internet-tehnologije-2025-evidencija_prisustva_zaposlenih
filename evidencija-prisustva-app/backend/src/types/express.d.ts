@@ -7,6 +7,7 @@ declare global {
         id: string;
         role: "ADMIN" | "EMPLOYEE";
         roleId?: string;
+        employeeType?: "PROFESSOR" | "ASSISTANT";
       };
     }
   }

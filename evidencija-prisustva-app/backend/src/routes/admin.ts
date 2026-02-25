@@ -1,6 +1,6 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { activities, roles, subjects, userSubjects, users } from "../db/schema.js";
@@ -31,7 +31,6 @@ function pad4(n: number) {
 }
 
 function toIcsDate(d: Date) {
-  
   const yyyy = d.getUTCFullYear();
   const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
   const dd = String(d.getUTCDate()).padStart(2, "0");
@@ -41,13 +40,15 @@ function toIcsDate(d: Date) {
   return `${yyyy}${mm}${dd}T${hh}${mi}${ss}Z`;
 }
 
-// sve admin rute su auth + admin
+
 router.use(authMiddleware, requireAdmin);
 
 router.get("/subjects", async (_req, res) => {
   const rows = await db.select({ id: subjects.id, name: subjects.name }).from(subjects);
   res.json(rows);
 });
+
+
 
 router.get("/users", async (_req, res) => {
   const rows = await db
@@ -57,6 +58,7 @@ router.get("/users", async (_req, res) => {
       lastName: users.lastName,
       email: users.email,
       role: roles.name,
+      employeeType: users.employeeType, 
       subjectId: subjects.id,
       subjectName: subjects.name,
     })
@@ -75,36 +77,46 @@ router.get("/users", async (_req, res) => {
         lastName: r.lastName,
         email: r.email,
         role: r.role,
+        employeeType: r.employeeType, 
         subjects: [],
       });
     }
+
     if (r.subjectId) {
-      map.get(r.userId).subjects.push({ id: r.subjectId, name: r.subjectName });
+      map.get(r.userId).subjects.push({
+        id: r.subjectId,
+        name: r.subjectName,
+      });
     }
   }
 
   res.json(Array.from(map.values()));
 });
 
-router.get("/next-professor-code", async (_req, res) => {
-  const rows = await db.select({ email: users.email }).from(users);
 
-  let max = 0;
-  for (const r of rows) {
-    const m = r.email.match(/\.([0-9]{4})@fon\.bg\.ac\.rs$/i);
-    if (!m) continue;
-    const n = Number(m[1]);
-    if (!Number.isNaN(n)) max = Math.max(max, n);
-  }
-
-  res.json({ nextCode: pad4(max + 1) });
-});
 
 router.post("/users", async (req, res) => {
-  const { firstName, lastName, professorCode, password, subjectIds } = req.body ?? {};
+  const {
+    firstName,
+    lastName,
+    professorCode,
+    password,
+    subjectIds,
+    employeeType,
+  } = req.body ?? {};
 
   if (!firstName || !lastName || !/^\d{4}$/.test(String(professorCode)) || !password) {
-    return res.status(400).json({ message: "Nedostaju podaci (ime, prezime, šifra 4 cifre, lozinka)." });
+    return res.status(400).json({
+      message: "Nedostaju podaci (ime, prezime, šifra 4 cifre, lozinka).",
+    });
+  }
+
+  const et = String(employeeType ?? "PROFESSOR").toUpperCase();
+
+  if (et !== "PROFESSOR" && et !== "ASSISTANT") {
+    return res.status(400).json({
+      message: "employeeType mora biti PROFESSOR ili ASSISTANT.",
+    });
   }
 
   const employeeRole = await db
@@ -114,16 +126,20 @@ router.post("/users", async (req, res) => {
     .limit(1);
 
   if (employeeRole.length === 0) {
-    return res.status(500).json({ message: "Uloga EMPLOYEE ne postoji u bazi." });
+    return res.status(500).json({ message: "Uloga EMPLOYEE ne postoji." });
   }
 
   const email = buildProfessorEmail(firstName, lastName, professorCode);
   const passwordHash = await bcrypt.hash(String(password), 10);
 
-  // provera email unique
-  const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
+  const existing = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+
   if (existing.length > 0) {
-    return res.status(409).json({ message: "Korisnik sa ovim email-om već postoji." });
+    return res.status(409).json({ message: "Korisnik već postoji." });
   }
 
   const inserted = await db
@@ -134,6 +150,7 @@ router.post("/users", async (req, res) => {
       email,
       passwordHash,
       roleId: employeeRole[0]!.id,
+      employeeType: et,
     })
     .returning({ id: users.id });
 
@@ -141,35 +158,57 @@ router.post("/users", async (req, res) => {
 
   if (Array.isArray(subjectIds) && subjectIds.length > 0) {
     await db.insert(userSubjects).values(
-      subjectIds.map((sid: string) => ({ userId: newUserId, subjectId: sid }))
+      subjectIds.map((sid: string) => ({
+        userId: newUserId,
+        subjectId: sid,
+      }))
     );
   }
 
   res.status(201).json({ id: newUserId, email });
 });
 
+
+
 router.put("/users/:id", async (req, res) => {
   const userId = req.params.id;
-  const { firstName, lastName, professorCode, password, subjectIds } = req.body ?? {};
+
+  const {
+    firstName,
+    lastName,
+    professorCode,
+    password,
+    subjectIds,
+    employeeType,
+  } = req.body ?? {};
 
   if (!firstName || !lastName || !/^\d{4}$/.test(String(professorCode))) {
-    return res.status(400).json({ message: "Nedostaju podaci (ime, prezime, šifra 4 cifre)." });
+    return res.status(400).json({
+      message: "Nedostaju podaci (ime, prezime, šifra 4 cifre).",
+    });
+  }
+
+  const et = String(employeeType ?? "PROFESSOR").toUpperCase();
+
+  if (et !== "PROFESSOR" && et !== "ASSISTANT") {
+    return res.status(400).json({
+      message: "employeeType mora biti PROFESSOR ili ASSISTANT.",
+    });
   }
 
   const email = buildProfessorEmail(firstName, lastName, professorCode);
 
-  // update osnovnih polja
   const updateData: any = {
     firstName: String(firstName).trim(),
     lastName: String(lastName).trim(),
     email,
+    employeeType: et,
   };
 
   if (password && String(password).length > 0) {
     updateData.passwordHash = await bcrypt.hash(String(password), 10);
   }
 
-  // provera da li email vec koristi neko drugi
   const collision = await db
     .select({ id: users.id })
     .from(users)
@@ -177,26 +216,32 @@ router.put("/users/:id", async (req, res) => {
     .limit(1);
 
   if (collision.length > 0) {
-    return res.status(409).json({ message: "Neki drugi korisnik već ima ovaj email." });
+    return res.status(409).json({
+      message: "Neki drugi korisnik već ima ovaj email.",
+    });
   }
 
   await db.update(users).set(updateData).where(eq(users.id, userId));
 
-  // update predmeta: obriši pa upiši nove
   await db.delete(userSubjects).where(eq(userSubjects.userId, userId));
+
   if (Array.isArray(subjectIds) && subjectIds.length > 0) {
     await db.insert(userSubjects).values(
-      subjectIds.map((sid: string) => ({ userId, subjectId: sid }))
+      subjectIds.map((sid: string) => ({
+        userId,
+        subjectId: sid,
+      }))
     );
   }
 
   res.json({ message: "Sačuvano." });
 });
 
+
+
 router.delete("/users/:id", async (req, res) => {
   const userId = req.params.id;
 
-  // ne brisemo admina
   const u = await db
     .select({ role: roles.name })
     .from(users)
@@ -208,54 +253,11 @@ router.delete("/users/:id", async (req, res) => {
     return res.status(400).json({ message: "Admin se ne može obrisati." });
   }
 
-  // prvo aktivnosti, veze sa predmetima, pa user
   await db.delete(activities).where(eq(activities.userId, userId));
   await db.delete(userSubjects).where(eq(userSubjects.userId, userId));
   await db.delete(users).where(eq(users.id, userId));
 
   res.json({ message: "Obrisano." });
-});
-
-router.get("/users/:id/ics", async (req, res) => {
-  const userId = req.params.id;
-
-  const rows = await db
-    .select({
-      id: activities.id,
-      title: activities.title,
-      description: activities.description,
-      startTime: activities.startTime,
-      endTime: activities.endTime,
-      room: activities.room,
-    })
-    .from(activities)
-    .where(eq(activities.userId, userId));
-
-  const now = new Date();
-  const lines: string[] = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//FON Evidencija//SRB//EN",
-    "CALSCALE:GREGORIAN",
-  ];
-
-  for (const a of rows) {
-    lines.push("BEGIN:VEVENT");
-    lines.push(`UID:${a.id}`);
-    lines.push(`DTSTAMP:${toIcsDate(now)}`);
-    lines.push(`DTSTART:${toIcsDate(new Date(a.startTime))}`);
-    lines.push(`DTEND:${toIcsDate(new Date(a.endTime))}`);
-    lines.push(`SUMMARY:${(a.title ?? "").replace(/\n/g, " ")}`);
-    if (a.room) lines.push(`LOCATION:${String(a.room).replace(/\n/g, " ")}`);
-    if (a.description) lines.push(`DESCRIPTION:${String(a.description).replace(/\n/g, " ")}`);
-    lines.push("END:VEVENT");
-  }
-
-  lines.push("END:VCALENDAR");
-
-  res.setHeader("Content-Type", "text/calendar; charset=utf-8");
-  res.setHeader("Content-Disposition", `attachment; filename="profesor_${userId}.ics"`);
-  res.send(lines.join("\r\n"));
 });
 
 export default router;

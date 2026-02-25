@@ -26,6 +26,7 @@ type AppUser = {
   id: string;
   role: "ADMIN" | "EMPLOYEE";
   roleId: string;
+  employeeType?: "PROFESSOR" | "ASSISTANT";
 };
 
 declare global {
@@ -56,16 +57,17 @@ export async function authMiddleware(
     return res.status(401).json({ message: "Nevažeći token." });
   }
 
-  const result = await db
-    .select({
-      id: users.id,
-      roleId: users.roleId,
-      roleName: roles.name,
-    })
-    .from(users)
-    .innerJoin(roles, eq(users.roleId, roles.id))
-    .where(eq(users.id, payload.sub))
-    .limit(1);
+const result = await db
+  .select({
+    id: users.id,
+    roleId: users.roleId,
+    roleName: roles.name,
+    employeeType: users.employeeType, 
+  })
+  .from(users)
+  .innerJoin(roles, eq(users.roleId, roles.id))
+  .where(eq(users.id, payload.sub))
+  .limit(1);
 
   const u = result[0];
   if (!u) {
@@ -77,11 +79,13 @@ export async function authMiddleware(
     return res.status(500).json({ message: "Nepoznata uloga u bazi." });
   }
 
-  req.user = {
-    id: u.id,
-    roleId: u.roleId,
-    role: roleName,
-  };
+req.user = {
+  id: u.id,
+  roleId: u.roleId,
+  role: roleName,
+
+  employeeType: roleName === "EMPLOYEE" ? (u.employeeType as any) : undefined,
+};
 
   return next();
 }

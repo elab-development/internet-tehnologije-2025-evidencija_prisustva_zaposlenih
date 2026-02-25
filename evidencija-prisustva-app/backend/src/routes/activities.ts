@@ -8,7 +8,7 @@ import { activities } from "../db/schema.js";
 const router = Router();
 
 /**
- * GET /activities
+
  * Vraća aktivnosti u zadatom opsegu za ulogovanog korisnika.
  */
 router.get("/", authMiddleware, async (req, res) => {
@@ -43,10 +43,8 @@ router.get("/", authMiddleware, async (req, res) => {
   }
 });
 
-/**
- * POST /activities
- * body: { subjectId, type, room?, title, description?, startTime, endTime }
- */
+
+ 
 router.post("/", authMiddleware, async (req, res) => {
   try {
     const userId = req.user!.id;
@@ -55,6 +53,18 @@ router.post("/", authMiddleware, async (req, res) => {
 
     if (!subjectId || !type || !title || !startTime || !endTime) {
       return res.status(400).json({ message: "Nedostaju obavezna polja." });
+    }
+
+    
+    const normalizedType = String(type).trim().toUpperCase();
+
+    
+    if (
+      req.user?.role === "EMPLOYEE" &&
+      req.user.employeeType === "ASSISTANT" &&
+      normalizedType === "PREDAVANJE"
+    ) {
+      return res.status(403).json({ message: "Asistent ne može da zakazuje predavanja." });
     }
 
     const start = new Date(startTime);
@@ -69,7 +79,7 @@ router.post("/", authMiddleware, async (req, res) => {
       .values({
         userId,
         subjectId,
-        type,
+        type: normalizedType, 
         room: room ?? null,
         title,
         description: description ?? null,

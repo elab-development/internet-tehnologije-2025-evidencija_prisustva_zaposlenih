@@ -16,11 +16,19 @@ export const roles = pgTable("roles", {
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
+
   firstName: varchar("first_name", { length: 100 }).notNull(),
   lastName: varchar("last_name", { length: 100 }).notNull(),
+
   email: varchar("email", { length: 255 }).notNull().unique(),
   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
+
   roleId: uuid("role_id").references(() => roles.id).notNull(),
+
+  employeeType: varchar("employee_type", { length: 20 })
+    .notNull()
+    .default("PROFESSOR"),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

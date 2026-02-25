@@ -5,12 +5,16 @@ import AdminSidebar from "@/components/layout/AdminSidebar";
 import { apiFetch } from "@/lib/api";
 
 type Subject = { id: string; name: string; code?: string };
+
+type EmployeeType = "PROFESSOR" | "ASSISTANT";
+
 type UserRow = {
   id: string;
   firstName: string;
   lastName: string;
   email: string;
   role: "ADMIN" | "EMPLOYEE";
+  employeeType?: EmployeeType;
   subjects: { id: string; name: string }[];
 };
 
@@ -44,6 +48,8 @@ export default function AdminUsersPage() {
   const [password, setPassword] = useState("");
   const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
 
+  const [employeeType, setEmployeeType] = useState<EmployeeType>("PROFESSOR");
+
   const computedEmail = useMemo(() => {
     const fn = normalizeEmailPart(firstName);
     const ln = normalizeEmailPart(lastName);
@@ -66,7 +72,7 @@ export default function AdminUsersPage() {
       const msg =
         typeof e === "object" && e && "message" in e
           ? String((e as { message?: string }).message)
-          : "Greška";
+          : "Greška pri učitavanju.";
       setError(msg);
     } finally {
       setLoading(false);
@@ -97,6 +103,8 @@ export default function AdminUsersPage() {
     setPassword("");
     setSelectedSubjectIds([]);
     setEditingId(null);
+
+    setEmployeeType("PROFESSOR");
   }
 
   async function openCreate() {
@@ -121,6 +129,12 @@ export default function AdminUsersPage() {
     const m = u.email.match(/\.([0-9]{4})@/);
     setProfCode(m?.[1] ?? "");
 
+    if (u.role === "EMPLOYEE") {
+      setEmployeeType(u.employeeType ?? "PROFESSOR");
+    } else {
+      setEmployeeType("PROFESSOR");
+    }
+
     setSelectedSubjectIds(u.subjects.map((x) => x.id));
     setOpen(true);
   }
@@ -133,7 +147,7 @@ export default function AdminUsersPage() {
       return;
     }
     if (!/^\d{4}$/.test(profCode)) {
-      setError("Šifra profesora mora imati tačno 4 cifre (npr 0003).");
+      setError("Šifra zaposlenog mora imati tačno 4 cifre (npr 0003).");
       return;
     }
     if (mode === "create" && password.length < 4) {
@@ -141,12 +155,20 @@ export default function AdminUsersPage() {
       return;
     }
 
-    const payload = {
+    const payload: {
+      firstName: string;
+      lastName: string;
+      professorCode: string;
+      password?: string;
+      subjectIds: string[];
+      employeeType: EmployeeType;
+    } = {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       professorCode: profCode,
       password: password || undefined,
       subjectIds: selectedSubjectIds,
+      employeeType,
     };
 
     try {
@@ -162,7 +184,7 @@ export default function AdminUsersPage() {
       const msg =
         typeof e === "object" && e && "message" in e
           ? String((e as { message?: string }).message)
-          : "Greška";
+          : "Greška pri čuvanju.";
       setError(msg);
     }
   }
@@ -176,7 +198,7 @@ export default function AdminUsersPage() {
       const msg =
         typeof e === "object" && e && "message" in e
           ? String((e as { message?: string }).message)
-          : "Greška";
+          : "Greška pri brisanju.";
       setError(msg);
     }
   }
@@ -203,7 +225,7 @@ export default function AdminUsersPage() {
       const msg =
         typeof e === "object" && e && "message" in e
           ? String((e as { message?: string }).message)
-          : "Greška";
+          : "Greška pri preuzimanju.";
       setError(msg);
     }
   }
@@ -254,11 +276,24 @@ export default function AdminUsersPage() {
                   <tr key={u.id} className="border-t">
                     <td className="p-3">
                       {u.firstName} {u.lastName}
+
                       {u.role === "ADMIN" ? (
-                        <span className="ml-2 text-xs px-2 py-1 rounded bg-primary-100 text-primary-700">ADMIN</span>
-                      ) : null}
+                        <span className="ml-2 text-xs px-2 py-1 rounded bg-primary-100 text-primary-700">
+                          ADMIN
+                        </span>
+                      ) : u.employeeType === "ASSISTANT" ? (
+                        <span className="ml-2 text-xs px-2 py-1 rounded bg-secondary-200 text-secondary-900">
+                          ASISTENT
+                        </span>
+                      ) : (
+                        <span className="ml-2 text-xs px-2 py-1 rounded bg-secondary-100 text-secondary-900">
+                          PROFESOR
+                        </span>
+                      )}
                     </td>
+
                     <td className="p-3">{u.email}</td>
+
                     <td className="p-3">
                       {u.subjects.length === 0 ? (
                         <span className="text-secondary-600">—</span>
@@ -266,6 +301,7 @@ export default function AdminUsersPage() {
                         u.subjects.map((s) => s.name).join(", ")
                       )}
                     </td>
+
                     <td className="p-3">
                       <div className="flex justify-end gap-2">
                         <button
@@ -341,7 +377,7 @@ export default function AdminUsersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-sans text-text mb-1">Šifra profesora (4 cifre)</label>
+                  <label className="block text-sm font-sans text-text mb-1">Šifra zaposlenog (4 cifre)</label>
                   <input
                     value={profCode}
                     onChange={(e) => setProfCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
@@ -360,6 +396,18 @@ export default function AdminUsersPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full rounded-md border border-secondary-300 px-3 py-2 bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-[color:var(--color-primary-900)] focus:ring-offset-2"
                   />
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-sm font-sans text-text mb-1">Tip zaposlenog</label>
+                  <select
+                    value={employeeType}
+                    onChange={(e) => setEmployeeType(e.target.value as EmployeeType)}
+                    className="w-full rounded-md border border-secondary-300 px-3 py-2 bg-white text-secondary-900 focus:outline-none focus:ring-2 focus:ring-[color:var(--color-primary-900)] focus:ring-offset-2"
+                  >
+                    <option value="PROFESSOR">Profesor</option>
+                    <option value="ASSISTANT">Asistent</option>
+                  </select>
                 </div>
 
                 <div className="col-span-2">

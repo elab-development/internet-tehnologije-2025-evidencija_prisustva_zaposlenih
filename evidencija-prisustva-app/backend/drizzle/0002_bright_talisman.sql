@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "employee_type" varchar(20) DEFAULT 'PROFESSOR' NOT NULL;
