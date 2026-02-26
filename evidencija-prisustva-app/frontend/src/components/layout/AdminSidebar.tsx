@@ -14,10 +14,17 @@ export default function AdminSidebar() {
     }`;
 
   const handleLogout = () => {
+    // cookie
+    document.cookie = "token=; Path=/; Max-Age=0; SameSite=Lax";
+    
+    // localStorage
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("role");
+    localStorage.removeItem("employeeType");
     localStorage.removeItem("activeSubjectId");
     localStorage.removeItem("activeSubjectName");
+    
     window.location.href = "/login";
   };
 

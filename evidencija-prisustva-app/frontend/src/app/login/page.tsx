@@ -43,6 +43,9 @@ export default function LoginPage() {
       // SAVE AUTH DATA
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
+      
+      // cookie za Next middleware (ne može da čita localStorage)
+      document.cookie = `token=${data.token}; Path=/; SameSite=Lax`;
 
       localStorage.setItem("role", data.user?.role ?? "");
       localStorage.setItem("employeeType", data.user?.employeeType ?? "");
