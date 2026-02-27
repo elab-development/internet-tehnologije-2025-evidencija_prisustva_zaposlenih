@@ -42,8 +42,43 @@ router.get("/", authMiddleware, async (req, res) => {
     return res.status(500).json({ message: "Greška na serveru." });
   }
 });
-
-
+// ZA SWAGGER
+/**
+ * @openapi
+ * /activities:
+ *   post:
+ *     summary: Kreiranje aktivnosti (evidencija)
+ *     tags:
+ *       - Activities
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               subjectId:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *                 example: VEZBE
+ *               title:
+ *                 type: string
+ *                 example: Vežbe 1
+ *               startTime:
+ *                 type: string
+ *                 example: "2026-02-27T10:00:00.000Z"
+ *               endTime:
+ *                 type: string
+ *                 example: "2026-02-27T12:00:00.000Z"
+ *     responses:
+ *       201:
+ *         description: Aktivnost kreirana
+ *       403:
+ *         description: Zabranjeno
+ */
  
 router.post("/", authMiddleware, async (req, res) => {
   try {

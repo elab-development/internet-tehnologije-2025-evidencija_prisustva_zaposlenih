@@ -16,6 +16,34 @@ function mustEnv(name: string): string {
   }
   return value;
 }
+// ZA SWAGGER
+/**
+ * @openapi
+ * /auth/login:
+ *   post:
+ *     summary: Prijava korisnika
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, password]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: pera.peric.0001@fon.bg.ac.rs
+ *               password:
+ *                 type: string
+ *                 example: profesor1
+ *     responses:
+ *       200:
+ *         description: Uspešan login
+ *       401:
+ *         description: Neispravan email ili lozinka
+ */
 
 // ================= LOGIN =================
 router.post("/login", async (req, res) => {

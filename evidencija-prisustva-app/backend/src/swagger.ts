@@ -1,3 +1,4 @@
+import path from "path";
 import swaggerJSDoc from "swagger-jsdoc";
 
 export const swaggerSpec = swaggerJSDoc({
@@ -8,11 +9,7 @@ export const swaggerSpec = swaggerJSDoc({
       version: "1.0.0",
       description: "API dokumentacija projekta",
     },
-    servers: [
-      {
-        url: "http://localhost:4000",
-      },
-    ],
+    servers: [{ url: "http://localhost:4000" }],
     components: {
       securitySchemes: {
         bearerAuth: {
@@ -22,6 +19,14 @@ export const swaggerSpec = swaggerJSDoc({
         },
       },
     },
+    security: [
+      {
+        bearerAuth: [],
+      },
+    ],
   },
-  apis: ["./src/routes/**/*.ts"],
+  apis: [
+    path.join(process.cwd(), "src/routes/**/*.ts"),
+    path.join(process.cwd(), "dist/routes/**/*.js"),
+  ],
 });

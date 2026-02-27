@@ -6,6 +6,22 @@ import { db } from "../db/index.js";
 import { subjects, userSubjects } from "../db/schema.js";
 
 const router = Router();
+// ZA SWAGGER
+/**
+ * @openapi
+ * /subjects/mine:
+ *   get:
+ *     summary: Vraća predmete ulogovanog korisnika
+ *     tags:
+ *       - Subjects
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista predmeta
+ *       401:
+ *         description: Niste autentifikovani
+ */
 
 // predmeti ulogovanog korisnika
 router.get("/mine", authMiddleware, async (req, res) => {

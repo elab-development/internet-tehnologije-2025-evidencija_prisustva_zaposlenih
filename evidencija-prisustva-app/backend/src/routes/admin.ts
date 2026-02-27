@@ -47,8 +47,24 @@ router.get("/subjects", async (_req, res) => {
   const rows = await db.select({ id: subjects.id, name: subjects.name }).from(subjects);
   res.json(rows);
 });
-
-
+// ZA SWAGGER
+/**
+ * @openapi
+ * /admin/users:
+ *   get:
+ *     summary: Lista svih korisnika (ADMIN)
+ *     tags:
+ *       - Admin
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista korisnika
+ *       401:
+ *         description: Niste autentifikovani
+ *       403:
+ *         description: Nemate pravo pristupa (nije admin)
+ */
 
 router.get("/users", async (_req, res) => {
   const rows = await db
