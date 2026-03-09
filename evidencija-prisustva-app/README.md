@@ -89,7 +89,7 @@ Backend API:
 http://localhost:4000
 
 Swagger dokumentacija:
-http://localhost:4000/api-docs
+http://localhost:4000/docs
 
 ## Baza podataka
 

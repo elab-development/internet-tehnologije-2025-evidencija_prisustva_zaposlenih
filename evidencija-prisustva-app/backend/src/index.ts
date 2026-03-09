@@ -1,3 +1,6 @@
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import xss from "xss-clean";
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -13,6 +16,18 @@ import { swaggerSpec } from "./swagger.js";
 dotenv.config();
 
 const app = express();
+
+app.use(helmet()); // sigurnosni HTTP headeri
+
+app.use(xss()); // XSS zaštita
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: "Previše zahteva sa ove IP adrese. Pokušajte kasnije."
+});
+
+app.use(limiter);
 
 app.use(
   cors({
